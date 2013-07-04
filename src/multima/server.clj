@@ -37,12 +37,13 @@
   [server session line]
   (let [exit (keyword (second (split line #" ")))
         next-room (get (:exits (current-room session)) exit)]
-    (println "Heading" exit)
-    (swap! session
-           assoc
-           :history
-           (conj (:history @session) next-room))
-    (describe-room (current-room session))))
+    (if next-room
+      (do (swap! session
+                 assoc
+                 :history
+                 (conj (:history @session) next-room))
+          (describe-room (current-room session)))
+      (println "Can't do that."))))
 
 ;; Server ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
