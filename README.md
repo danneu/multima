@@ -1,13 +1,6 @@
-# multima
+multima
+=======
 
-A Clojure library designed to ... well, that part is up to you.
+A modest Clojure MUD
 
-## Usage
-
-FIXME
-
-## License
-
-Copyright © 2013 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+Learning from [jcromartie/dunjeon](https://github.com/jcromartie/dunjeon) until I (hopefully) get on my own two feet.
