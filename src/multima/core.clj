@@ -1,4 +1,5 @@
 (ns multima.core
+  (:use [multima world])
   (:require [clojure.java.io :as io]
             [clojure.string :refer [blank? split]])
   (:import [java.net ServerSocket]
@@ -13,13 +14,10 @@
 
 ;; World ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def chamber
-  {:id :chamber
-   :name "Your chamber"
-   :desc "Your chamber includes a bed and a small round window that gazes out into space. Canned sardines have more room than this."})
+(load-realm "ship")
 
 (defn current-room [session]
-  (last (:history @session)))
+  @(resolve (last (:history @session))))
 
 ;; Commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -33,16 +31,29 @@
 
 (defmethod command :look
   [_ session _]
-  ;; Slime
-  (println (:desc (current-room session))))
+  (describe-room (current-room session)))
+
+(defmethod command :go
+  [server session line]
+  (let [exit (keyword (second (split line #" ")))
+        next-room (get (:exits (current-room session)) exit)]
+    (println "Heading" exit)
+    (swap! session
+           assoc
+           :history
+           (conj (:history @session) next-room))
+    (describe-room (current-room session))))
+
+;; Server ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; Server is just {:socket server-socket :players #{}}
-;; Player is {:in buffered-reader :out print-reader}
+;; Player is {:in buffered-reader :out print-reader
+;;            :history [<rooms>]}
 
 (defn make-session [in out]
   (atom {:in (io/reader in)
          :out (PrintWriter. out true)
-         :history [chamber]}))
+         :history ['ship/chamber]}))
 
 (defn start-repl [server session]
   (binding [*in* (:in @session)
