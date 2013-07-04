@@ -1,4 +1,4 @@
-(ns multima.core
+(ns multima.server
   (:use [multima world])
   (:require [clojure.java.io :as io]
             [clojure.string :refer [blank? split]])
