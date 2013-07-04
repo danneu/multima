@@ -44,6 +44,21 @@
          :out (PrintWriter. out true)
          :history [chamber]}))
 
+(defn start-repl [server session]
+  (binding [*in* (:in @session)
+            *out* (:out @session)]
+
+    (println (str "\nWelcome to Multima.\n"
+                  "Players: " (count @(:players server))
+                  "\n"))
+
+    (loop [line (prompt "You awake in a chamber.")]
+      (when-not (or (blank? line) (= line "quit"))
+        (command server session line)
+        (recur (prompt))))
+
+    (println "Quitting...")))
+
 (defn handle-client [csock server]
   (println "Client connected!")
   (with-open [in (io/input-stream csock)
@@ -54,20 +69,9 @@
       (swap! (:players server) conj session)
 
       ;; Start player repl.
-      (binding [*in* (:in @session)
-                *out* (:out @session)]
-        ;; Greet player with server stats.
-        (println (str "\nWelcome to Multima.\n"
-                       "Players: " (count @(:players server))
-                       "\n"))
-
-        (loop [line (prompt "You awake in a chamber.")]
-          (when-not (or (blank? line) (= line "quit"))
-            (command server session line)
-            (recur (prompt)))))
+      (start-repl server session)
 
       ;; Remove player when done.
-      (.println (:out session) "Quitting...")
       (swap! (:players server) disj session))))
 
 (defn make-server [port]
