@@ -29,13 +29,12 @@
 
 (defmethod command :default
   [_ session _]
-  (.println (:out @session) "What?"))
+  (println "What?"))
 
 (defmethod command :look
   [_ session _]
   ;; Slime
-  (.println (:out @session)
-            (:desc (current-room session))))
+  (println (:desc (current-room session))))
 
 ;; Server is just {:socket server-socket :players #{}}
 ;; Player is {:in buffered-reader :out print-reader}
@@ -54,15 +53,14 @@
       ;; Add player session to server's players.
       (swap! (:players server) conj session)
 
-      ;; Greet player with server stats.
-      (.println (:out @session)
-                (str "\nWelcome to Multima.\n"
-                     "Players: " (count @(:players server))
-                     "\n"))
-
       ;; Start player repl.
       (binding [*in* (:in @session)
                 *out* (:out @session)]
+        ;; Greet player with server stats.
+        (println (str "\nWelcome to Multima.\n"
+                       "Players: " (count @(:players server))
+                       "\n"))
+
         (loop [line (prompt "You awake in a chamber.")]
           (when-not (or (blank? line) (= line "quit"))
             (command server session line)
