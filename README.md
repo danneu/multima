@@ -20,11 +20,20 @@ Terminal 2: Connect client
 
     You awake in a chamber.
     > look
-    Your bedroom includes a bed and a small round window 
-    that gazes out into space. Canned sardines have more 
-    room than this.
+    Your chamber includes a bed and a small round window that gazes out into space. Canned sardines have more room than this.
+     - down: tube
 
-    > sleep
+    > go down
+    Heading :down
+    You're squeezed into a tube.
+     - up: chamber
+
+    > go up
+    Heading :up
+    Your chamber includes a bed and a small round window that gazes out into space. Canned sardines have more room than this.
+     - down: tube
+
+    > lol
     What?
 
     > quit
