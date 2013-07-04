@@ -1,13 +1,18 @@
 (ns multima.core
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [clojure.string :refer [blank?]])
   (:import [java.net ServerSocket]
            [java.io PrintWriter]))
 
-(defn prompt [msg]
-  (print (str msg "> ")) (flush) (read-line))
+(defn prompt
+  ([] (prompt ""))
+  ([msg]
+     (print (str msg "\n> "))
+     (flush)
+     (read-line)))
 
 ;; Server is just {:socket server-socket :players #{}}
-;; Player is {:in buffered-reader :out :print-reader}
+;; Player is {:in buffered-reader :out print-reader}
 
 (defn handle-client [csock server]
   (println "Client connected!")
@@ -25,7 +30,12 @@
                      "Players: " (count @(:players server))))
 
       ;; Start player repl.
-      ;; ...
+      (binding [*in* (:in session)
+                *out* (:out session)]
+        (loop [line (prompt "You awake in a chamber.")]
+          (if (or (blank? line) (= line "quit"))
+            (.println (:out session) "Quitting...")
+            (recur (prompt "What?")))))
 
       ;; Remove player when done.
       (swap! (:players server) disj session)
