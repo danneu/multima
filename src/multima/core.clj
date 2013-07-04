@@ -1,6 +1,6 @@
 (ns multima.core
   (:require [clojure.java.io :as io]
-            [clojure.string :refer [blank?]])
+            [clojure.string :refer [blank? split]])
   (:import [java.net ServerSocket]
            [java.io PrintWriter]))
 
@@ -10,6 +10,22 @@
      (print (str msg "\n> "))
      (flush)
      (read-line)))
+
+;; Commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmulti command
+  (fn [server session line]
+    (keyword (first (split line #" ")))))
+
+(defmethod command :default
+  [_ session _]
+  (.println (:out session) "What?"))
+
+(defmethod command :look
+  [_ session _]
+  ;; Slime
+  (.println (:out session)
+            "Your bedroom includes a bed and a small round window that gazes out into space. Canned sardines have more room than this."))
 
 ;; Server is just {:socket server-socket :players #{}}
 ;; Player is {:in buffered-reader :out print-reader}
@@ -26,18 +42,20 @@
 
       ;; Greet player with server stats.
       (.println (:out session)
-                (str "Welcome to Multima.\n"
-                     "Players: " (count @(:players server))))
+                (str "\nWelcome to Multima.\n"
+                     "Players: " (count @(:players server))
+                     "\n"))
 
       ;; Start player repl.
       (binding [*in* (:in session)
                 *out* (:out session)]
         (loop [line (prompt "You awake in a chamber.")]
-          (if (or (blank? line) (= line "quit"))
-            (.println (:out session) "Quitting...")
-            (recur (prompt "What?")))))
+          (when-not (or (blank? line) (= line "quit"))
+            (command server session line)
+            (recur (prompt)))))
 
       ;; Remove player when done.
+      (.println (:out session) "Quitting...")
       (swap! (:players server) disj session)
       )))
 
