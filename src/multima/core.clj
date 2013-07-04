@@ -11,6 +11,16 @@
      (flush)
      (read-line)))
 
+;; World ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def chamber
+  {:id :chamber
+   :name "Your chamber"
+   :desc "Your chamber includes a bed and a small round window that gazes out into space. Canned sardines have more room than this."})
+
+(defn current-room [session]
+  (last (:history @session)))
+
 ;; Commands ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmulti command
@@ -19,36 +29,40 @@
 
 (defmethod command :default
   [_ session _]
-  (.println (:out session) "What?"))
+  (.println (:out @session) "What?"))
 
 (defmethod command :look
   [_ session _]
   ;; Slime
-  (.println (:out session)
-            "Your bedroom includes a bed and a small round window that gazes out into space. Canned sardines have more room than this."))
+  (.println (:out @session)
+            (:desc (current-room session))))
 
 ;; Server is just {:socket server-socket :players #{}}
 ;; Player is {:in buffered-reader :out print-reader}
+
+(defn make-session [in out]
+  (atom {:in (io/reader in)
+         :out (PrintWriter. out true)
+         :history [chamber]}))
 
 (defn handle-client [csock server]
   (println "Client connected!")
   (with-open [in (io/input-stream csock)
               out (io/output-stream csock)]
-    (let [session {:in (io/reader in)
-                   :out (PrintWriter. out true)}]
+    (let [session (make-session in out)]
 
       ;; Add player session to server's players.
       (swap! (:players server) conj session)
 
       ;; Greet player with server stats.
-      (.println (:out session)
+      (.println (:out @session)
                 (str "\nWelcome to Multima.\n"
                      "Players: " (count @(:players server))
                      "\n"))
 
       ;; Start player repl.
-      (binding [*in* (:in session)
-                *out* (:out session)]
+      (binding [*in* (:in @session)
+                *out* (:out @session)]
         (loop [line (prompt "You awake in a chamber.")]
           (when-not (or (blank? line) (= line "quit"))
             (command server session line)
@@ -56,8 +70,7 @@
 
       ;; Remove player when done.
       (.println (:out session) "Quitting...")
-      (swap! (:players server) disj session)
-      )))
+      (swap! (:players server) disj session))))
 
 (defn make-server [port]
   (let [server {:socket (ServerSocket. port)
